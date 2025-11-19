@@ -1,11 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { TablesInsert, TablesUpdate } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
+
+type GoalWithRelations = Tables<'goals'> & {
+  tactics: Tables<'tactics'>[]
+  goal_lag_indicators: Tables<'goal_lag_indicators'>[]
+}
 
 export function useGoals(cycleId: string | undefined) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<GoalWithRelations[]>({
     queryKey: ['goals', cycleId],
     queryFn: async () => {
       if (!cycleId) return []
@@ -17,7 +22,7 @@ export function useGoals(cycleId: string | undefined) {
         .order('display_order')
 
       if (error) throw error
-      return data
+      return data as GoalWithRelations[]
     },
     enabled: !!cycleId,
   })
