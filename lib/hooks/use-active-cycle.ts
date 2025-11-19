@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { Tables } from '@/types/database'
 
 export function useActiveCycle() {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'cycles'> | null>({
     queryKey: ['cycles', 'active'],
     queryFn: async () => {
       const { data, error } = await supabase
