@@ -48,7 +48,7 @@ export function useCreateGoal() {
   const supabase = createClient()
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<Tables<'goals'>, Error, TablesInsert<'goals'>>({
     mutationFn: async (goal: TablesInsert<'goals'>) => {
       const { data, error } = await supabase
         .from('goals')
