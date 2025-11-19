@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { TablesInsert, TablesUpdate } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
 
 export function useWeeklyReviews(cycleId: string | undefined) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'weekly_reviews'>[]>({
     queryKey: ['weekly_reviews', cycleId],
     queryFn: async () => {
       if (!cycleId) return []
