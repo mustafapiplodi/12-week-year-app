@@ -34,7 +34,7 @@ export function GoalProgressBars({ goals, scheduledTasks = [] }: GoalProgressBar
   // Calculate progress for each goal
   const goalProgress = goals.map(goal => {
     const tacticIds = goal.tactics?.map(t => t.id) || []
-    const relatedTasks = scheduledTasks.filter(st => tacticIds.includes(st.tactic_id))
+    const relatedTasks = scheduledTasks.filter(st => st.tactic_id && tacticIds.includes(st.tactic_id))
 
     const totalTasks = relatedTasks.length
     const completedTasks = relatedTasks.filter(st => st.is_completed).length

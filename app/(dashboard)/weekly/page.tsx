@@ -26,7 +26,7 @@ export default function WeeklyPage() {
   const { data: activeCycle } = useActiveCycle()
   const { data: goals } = useGoals(activeCycle?.id)
   const currentWeek = activeCycle ? getCurrentWeek(activeCycle.start_date) : 0
-  const weekDates = activeCycle ? getWeekDates(activeCycle.start_date, currentWeek) : null
+  const weekDates = activeCycle ? getWeekDates(new Date(activeCycle.start_date), currentWeek) : null
 
   // Check if today is Saturday (6) or Sunday (0)
   const today = new Date()

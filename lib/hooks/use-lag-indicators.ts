@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { TablesInsert, TablesUpdate } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
 
 // Fetch lag indicators for a specific goal
 export function useGoalLagIndicators(goalId: string | undefined) {
@@ -28,7 +28,7 @@ export function useGoalLagIndicators(goalId: string | undefined) {
 export function useLagSnapshots(indicatorId: string | undefined, cycleId: string | undefined) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'goal_lag_snapshots'>[]>({
     queryKey: ['lag-snapshots', indicatorId, cycleId],
     queryFn: async () => {
       if (!indicatorId || !cycleId) return []
@@ -51,7 +51,7 @@ export function useLagSnapshots(indicatorId: string | undefined, cycleId: string
 export function useWeekLagSnapshots(cycleId: string | undefined, weekNumber: number) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'goal_lag_snapshots'>[]>({
     queryKey: ['week-lag-snapshots', cycleId, weekNumber],
     queryFn: async () => {
       if (!cycleId) return []
@@ -66,7 +66,7 @@ export function useWeekLagSnapshots(cycleId: string | undefined, weekNumber: num
         .eq('week_number', weekNumber)
 
       if (error) throw error
-      return data
+      return data as Tables<'goal_lag_snapshots'>[]
     },
     enabled: !!cycleId,
   })

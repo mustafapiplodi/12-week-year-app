@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { TablesInsert, TablesUpdate } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
+
+type ScheduledTaskWithTactics = Tables<'scheduled_tasks'> & {
+  tactics: Tables<'tactics'> | null
+}
 
 export function useScheduledTasks(cycleId: string | undefined, weekNumber?: number) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<ScheduledTaskWithTactics[]>({
     queryKey: ['scheduled_tasks', cycleId, weekNumber],
     queryFn: async () => {
       if (!cycleId) return []
@@ -23,7 +27,7 @@ export function useScheduledTasks(cycleId: string | undefined, weekNumber?: numb
       const { data, error } = await query
 
       if (error) throw error
-      return data
+      return data as ScheduledTaskWithTactics[]
     },
     enabled: !!cycleId,
   })

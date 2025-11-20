@@ -23,7 +23,7 @@ export function useActiveCycle() {
 export function useCycles() {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'cycles'>[]>({
     queryKey: ['cycles'],
     queryFn: async () => {
       const { data, error } = await supabase

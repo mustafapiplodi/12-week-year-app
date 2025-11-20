@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { TablesInsert, TablesUpdate } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
 
 export function useCycles() {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'cycles'>[]>({
     queryKey: ['cycles'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,7 +22,7 @@ export function useCycles() {
 export function useCycle(id: string) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'cycles'>>({
     queryKey: ['cycles', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -48,6 +48,7 @@ export function useCreateCycle() {
       if (!user) throw new Error('No user found')
 
       // Deactivate all existing cycles
+      // @ts-ignore - Supabase type inference issue with string literals
       await supabase
         .from('cycles')
         .update({ status: 'completed' })

@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { TablesInsert, TablesUpdate } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
 
 export function useActiveVision() {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<Tables<'visions'> | null>({
     queryKey: ['visions', 'active'],
     queryFn: async () => {
       const { data, error } = await supabase
