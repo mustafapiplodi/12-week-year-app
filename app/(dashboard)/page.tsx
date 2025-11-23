@@ -7,7 +7,7 @@ import { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from '@/lib/hoo
 import { useCreateTactic, useUpdateTactic, useDeleteTactic } from '@/lib/hooks/use-tactics'
 import { useWeeklyReviews } from '@/lib/hooks/use-weekly-reviews'
 import { useActiveVision } from '@/lib/hooks/use-vision'
-import { useCreateLagIndicator, useDeleteLagIndicator, useWeekLagSnapshots } from '@/lib/hooks/use-lag-indicators'
+import { useCreateLagIndicator, useDeleteLagIndicator, useUpdateLagIndicator, useWeekLagSnapshots } from '@/lib/hooks/use-lag-indicators'
 import { ProgressRing } from '@/components/today/progress-ring'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -41,6 +41,8 @@ export default function DashboardPage() {
   const updateTactic = useUpdateTactic()
   const deleteTactic = useDeleteTactic()
   const createLagIndicator = useCreateLagIndicator()
+  const updateLagIndicator = useUpdateLagIndicator()
+  const deleteLagIndicator = useDeleteLagIndicator()
 
   // Form states
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -50,6 +52,7 @@ export default function DashboardPage() {
 
   // Lag indicators state
   type LagIndicatorForm = {
+    id?: string // Track existing indicator IDs
     name: string
     metric_type: 'number' | 'currency' | 'percentage' | 'weight_kg' | 'weight_lbs' | 'rating' | 'score' | 'count' | 'duration'
     target_value: string
@@ -57,6 +60,7 @@ export default function DashboardPage() {
   const [lagIndicators, setLagIndicators] = useState<LagIndicatorForm[]>([
     { name: '', metric_type: 'number', target_value: '' }
   ])
+  const [lagIndicatorsToDelete, setLagIndicatorsToDelete] = useState<string[]>([])
 
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set())
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
@@ -143,17 +147,38 @@ export default function DashboardPage() {
           target_metric: '',
         })
 
-        // Update lag indicators if any are filled out
+        // Delete indicators marked for deletion
+        for (const indicatorId of lagIndicatorsToDelete) {
+          await deleteLagIndicator.mutateAsync({
+            id: indicatorId,
+            goal_id: editingGoalId,
+          })
+        }
+
+        // Update or create lag indicators
         const validLagIndicators = lagIndicators.filter(ind => ind.name.trim() !== '')
         for (let i = 0; i < validLagIndicators.length; i++) {
           const indicator = validLagIndicators[i]
-          await createLagIndicator.mutateAsync({
-            goal_id: editingGoalId,
-            name: indicator.name,
-            metric_type: indicator.metric_type,
-            target_value: indicator.target_value ? parseFloat(indicator.target_value) : null,
-            display_order: i,
-          })
+          if (indicator.id) {
+            // Update existing indicator
+            await updateLagIndicator.mutateAsync({
+              id: indicator.id,
+              goal_id: editingGoalId,
+              name: indicator.name,
+              metric_type: indicator.metric_type,
+              target_value: indicator.target_value ? parseFloat(indicator.target_value) : null,
+              display_order: i,
+            })
+          } else {
+            // Create new indicator
+            await createLagIndicator.mutateAsync({
+              goal_id: editingGoalId,
+              name: indicator.name,
+              metric_type: indicator.metric_type,
+              target_value: indicator.target_value ? parseFloat(indicator.target_value) : null,
+              display_order: i,
+            })
+          }
         }
 
         toast.success('Goal updated!')
@@ -190,6 +215,7 @@ export default function DashboardPage() {
       setGoalDescription('')
       setGoalWhy('')
       setLagIndicators([{ name: '', metric_type: 'number', target_value: '' }])
+      setLagIndicatorsToDelete([])
     } catch (error) {
       toast.error(editingGoalId ? 'Failed to update goal' : 'Failed to create goal')
     }
@@ -490,6 +516,12 @@ export default function DashboardPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => {
+                              const indicatorToRemove = lagIndicators[index]
+                              // If it has an ID, mark it for deletion from database
+                              if (indicatorToRemove.id) {
+                                setLagIndicatorsToDelete([...lagIndicatorsToDelete, indicatorToRemove.id])
+                              }
+                              // Remove from the form
                               setLagIndicators(lagIndicators.filter((_, i) => i !== index))
                             }}
                           >
@@ -509,6 +541,8 @@ export default function DashboardPage() {
                     setGoalTitle('')
                     setGoalDescription('')
                     setGoalWhy('')
+                    setLagIndicators([{ name: '', metric_type: 'number', target_value: '' }])
+                    setLagIndicatorsToDelete([])
                   }}>
                     Cancel
                   </Button>
@@ -517,9 +551,9 @@ export default function DashboardPage() {
             )}
 
             {/* Goals List */}
-            {goals && goals.length > 0 ? (
+            {goals && goals.filter(g => g.id !== editingGoalId).length > 0 ? (
               <div className="space-y-3">
-                {goals.map((goal, index) => {
+                {goals.filter(g => g.id !== editingGoalId).map((goal, index) => {
                   const isExpanded = expandedGoals.has(goal.id)
                   const tactics = goal.tactics || []
 
@@ -553,16 +587,20 @@ export default function DashboardPage() {
                                 setGoalDescription(goal.description || '')
                                 setGoalWhy(goal.why_it_matters || '')
 
-                                // Pre-fill existing lag indicators
+                                // Pre-fill existing lag indicators with IDs
                                 const existingIndicators = (goal as any).goal_lag_indicators || []
                                 if (existingIndicators.length > 0) {
                                   setLagIndicators(existingIndicators.map((ind: any) => ({
+                                    id: ind.id, // Include the ID for tracking
                                     name: ind.name,
                                     metric_type: ind.metric_type,
                                     target_value: ind.target_value?.toString() || '',
                                   })))
+                                } else {
+                                  setLagIndicators([{ name: '', metric_type: 'number', target_value: '' }])
                                 }
 
+                                setLagIndicatorsToDelete([]) // Reset deletion tracking
                                 setShowGoalForm(true)
                               }}
                             >
