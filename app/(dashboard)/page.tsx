@@ -620,7 +620,7 @@ export default function DashboardPage() {
                         {!isExpanded && (goal as any).goal_lag_indicators && (goal as any).goal_lag_indicators.length > 0 && (
                           <div className="ml-8 mt-3 space-y-2">
                             <p className="text-xs font-medium text-muted-foreground">📊 Progress:</p>
-                            {(goal as any).goal_lag_indicators.slice(0, 3).map((indicator: any) => {
+                            {(goal as any).goal_lag_indicators.map((indicator: any) => {
                               const snapshot = lagSnapshots?.find(s => s.goal_lag_indicator_id === indicator.id)
                               const currentValue = snapshot?.value || 0
                               const targetValue = indicator.target_value || 1
@@ -648,11 +648,6 @@ export default function DashboardPage() {
                                 </div>
                               )
                             })}
-                            {(goal as any).goal_lag_indicators.length > 3 && (
-                              <p className="text-xs text-muted-foreground">
-                                +{(goal as any).goal_lag_indicators.length - 3} more indicators
-                              </p>
-                            )}
                           </div>
                         )}
 
